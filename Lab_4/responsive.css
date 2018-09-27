@@ -1,0 +1,41 @@
+
+
+@media screen and (min-width: 1201px) {
+  .software {
+    width: 500px;
+    height: 600px;
+    background-image: url("software.png") 0 0px;
+  }
+}
+
+@media screen and (min-width: 1001px) and (max-width: 1200px) {
+  .software {
+    width: 400px;
+    height: 600px;
+    background-image: url("software.png") -500 0px;
+  }
+}
+
+@media screen and (min-width: 801px) and (max-width: 1000px) {
+  .software {
+    width: 300px;
+    height: 600px;
+    background-image: url("software.png") -900 0px;
+  }
+}
+
+@media screen and (min-width: 601px) and (max-width: 800px) {
+  .software {
+    width: 700px;
+    height: 600px;
+    background-image: url("software.png") 0 -600px;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  .software {
+    width: 500px;
+    height: 600px;
+    background-image: url("software.png") -700 -600px;
+  }
+}
