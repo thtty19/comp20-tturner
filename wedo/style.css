@@ -1,0 +1,14 @@
+body {
+  text-align: center;
+  background-color: black;
+  color: white;
+}
+
+#title {
+  text-decoration: underline;
+}
+
+#lyrics {
+  padding-top: 30px;
+  font-size: 25px;
+}
