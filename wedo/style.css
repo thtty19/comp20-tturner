@@ -1,14 +1,25 @@
+
+
 body {
+  background-image: url("Illuminati.png");
+  background-size: 20vw;
   text-align: center;
-  background-color: black;
-  color: white;
 }
 
 #title {
   text-decoration: underline;
+  background-color: gold;
+  color: black;
+  margin-left: 35vw;
+  margin-right: 35vw;
 }
 
 #lyrics {
-  padding-top: 30px;
+  padding-top: 20px;
+  padding-bottom: 20px;
   font-size: 25px;
+  background-color: gold;
+  color: black;
+  margin-left: 30vw;
+  margin-right: 30vw;
 }
