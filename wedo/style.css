@@ -2,7 +2,8 @@
 
 body {
   background-image: url("Illuminati.png");
-  background-size: 20vw;
+  background-size: 15vw;
+  background-attachment: scroll;
   text-align: center;
 }
 
