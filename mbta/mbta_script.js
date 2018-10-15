@@ -1,11 +1,5 @@
 
-var map;
-function initMap () {
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: {lat: 42.352271, lng: -71.05524200000001},
-    zoom: 12
-  });
-
+//hardcoding in the stop ids, latitudes, and longitudes for all the stops
 var redLineStops = [
   { stop_id: "place-alfcl", lat: 42.395428, lng: -71.142483},
   { stop_id: "place-davis", lat: 42.39674, lng: -71.121815},
@@ -33,11 +27,33 @@ var redLineStops = [
   { stop_id: "place-brntn", lat: 42.2078543, lng: -71.0011385}
 ];
 
-var ashmontFullLine = redLineStops.slice(0, 16);
-var braintreeBranch = redLineStops.slice(17, 21);
-
+//producing an array with stops from alewife to ashmont
+var ashmontFullLine = redLineStops.slice(0, 17);
+//producing an array with the JFK/UMass stops and the Braintree branch stops
+var braintreeBranch = redLineStops.slice(17, 22);
 braintreeBranch.unshift(redLineStops[12]);
 
+/*
+var location;
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(setLocation);
+}
+
+function setLocation(position) {
+location = {lat: position.coords.latitude, lng: position.coords.longitude};
+}
+*/
+
+//Creating the display
+var map;
+function initMap () {
+  //making the map the background, initially centered at South Station
+  map = new google.maps.Map(document.getElementById("map"), {
+    center: {lat: 42.352271, lng: -71.05524200000001},
+    zoom: 12
+  });
+
+//creating a polyline connecting the stops from alewife to ashmont
 var redLineMajor = new google.maps.Polyline ({
   path: ashmontFullLine,
   strokeColor: '#FF0000',
@@ -46,15 +62,31 @@ var redLineMajor = new google.maps.Polyline ({
   map: map,
 });
 
+//creating a polyline for the braintree branch stops
 var redLineMinor = new google.maps.Polyline ({
   path: braintreeBranch,
   strokeColor: '#FF0000',
   strokeOpactiy: 1.0,
-  strokeWidth: 3,
+  strokeWidth: 2,
   map: map,
 });
 
-redLineMajor.setMap(map);
-redLineMinor.setMap(map);
+//placing the station markers on the
+
+var stationMarker = [];
+
+for (i=0; i<redLineStops.length; i++) {
+  stationMarker[i] = new google.maps.Marker({
+    position: redLineStops[i],
+    icon: {
+      path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+      scale: 4
+    },
+    draggable: false,
+    map: map
+  })
+};
+
+
 
 }
