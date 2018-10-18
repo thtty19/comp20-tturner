@@ -27,7 +27,7 @@ var redLineStops = [
   {name: "Braintree", stop_id: "place-brntn", lat: 42.2078543, lng: -71.0011385}
 ];
 
-var testCoords = {latitude: 42.2078543, longitude: -71.0011385}
+var testCoords = {latitude: 42.3113, longitude: -71.05332}
 
 //producing an array with stops from alewife to ashmont
 var ashmontFullLine = redLineStops.slice(0, 17);
@@ -37,22 +37,16 @@ braintreeBranch.unshift(redLineStops[12]);
 
 //geolocation section. Unable to test the geolocation on a local server I think
 //Need to check with office hours or Ming
-
 function saveLocation(pos){
   var coords = pos.coords;
   console.log(coords);
   console.log("v good");
 }
-
 function locationError(){}
-
-
 if (navigator.geolocation){
-  console.log("good");
+  //console.log("good");
   //var location = navigator.geolocation.getCurrentPosition(saveLocation, locationError);
-} else {
-  console.log("this aint working");
-}
+};
 
 
 
@@ -66,47 +60,60 @@ function initMap () {
   });
 
 //creating a polyline connecting the stops from alewife to ashmont
-var redLineMajor = new google.maps.Polyline ({
-  path: ashmontFullLine,
-  strokeColor: '#FF0000',
-  strokeOpactiy: 1.0,
-  strokeWidth: 3,
-  map: map,
-});
+  var redLineMajor = new google.maps.Polyline ({
+    path: ashmontFullLine,
+    strokeColor: '#FF0000',
+    strokeOpactiy: 1.0,
+    strokeWidth: 3,
+    map: map,
+  });
 
 //creating a polyline for the braintree branch stops
-var redLineMinor = new google.maps.Polyline ({
-  path: braintreeBranch,
-  strokeColor: '#FF0000',
-  strokeOpactiy: 1.0,
-  strokeWidth: 2,
-  map: map,
-});
-
-var infoWindow = new google.maps.InfoWindow({
-  content: "working"
-});
-
-//placing the station markers on the map
-var stationMarker = [];
-
-for (i=0; i<redLineStops.length; i++) {
-  stationMarker[i] = new google.maps.Marker({
-    position: redLineStops[i],
-    icon: {
-      path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-      scale: 4
-    },
-    draggable: false,
-    map: map
-  })
-
-  stationMarker[i].addListener('click', function () {
-    infoWindow.open(map, this)
+  var redLineMinor = new google.maps.Polyline ({
+    path: braintreeBranch,
+    strokeColor: '#FF0000',
+    strokeOpactiy: 1.0,
+    strokeWidth: 2,
+    map: map,
   });
-};
 
-findNearest(testCoords, redLineStops);
+
+
+
+
+
+  var infoWindow = new google.maps.InfoWindow({
+    content: "ugh"
+  });
+
+//creating and placing the station markers on the map
+  var stationMarker = [];
+  for (i=0; i<redLineStops.length; i++) {
+    stationMarker[i] = new google.maps.Marker({
+      position: redLineStops[i],
+      icon: {
+        path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
+        scale: 4
+      },
+      draggable: false,
+      map: map
+    })
+
+    stationMarker[i].addListener('click', function() {
+      infoWindow.open(map, this)
+    });
+
+    stationMarker[i].addListener('click', function() {
+      var index = stationMarker.indexOf(this);
+      var stopInfo = redLineStops[index];
+      fetchTrainInfo(stopInfo)
+    });
+
+  };
+
+
+  //Calling the function to find the nearest T station
+  //findNearest(testCoords, redLineStops);
 
 }
 
@@ -116,54 +123,54 @@ function toRadians(x) {
 }
 
 
-
-
 //function to determine the closest station to you
 //requires two paramters, an object containing your latitude and longitute
 //and an aray of objects containing the stations' stop ids, lats, and longs
-
-function findNearest(yourLoc, stations) {
+/*function findNearest(yourLoc, stations) {
   var distance;
   var closestStop = {stop_id: "", distance: Infinity};
   var currentStation = new google.maps.LatLng(0, 0);
-/*
-  var radius = 6317;
-  var a;
-  var lat1 = yourLoc.lat;
-  var lng1 = yourLoc.lng;
-  var latRad1 = toRadians(yourLoc.lat);
-  var latRad;
-  var lat2;
-  var lng2;
-  var dLat;
-  var dLng;
-*/
+
   for (i = 0; i < stations.length; i++) {
-    /*
-    lat2 = stations[i].lat;
-    lng2 = stations[i].lng;
 
-    latRad2 = toRadians(lat2);
+    station = (new google.maps.LatLng(stations[i].lat, stations[i].lng));
 
-    dLat = toRadians(lat1-lat2);
-    dLng = toRadians(lng1-lng2);
+    var distance = new google.maps.geometry.spherical.computeDistanceBetween(yourLoc, station);
 
-    a = (Math.sin(dLat/2) * Math.sin(dLat/2)) + (Math.cos(latRad1) * Math.cos(latRad2))
-      + (Math.sin(dLng/2) * Math.sin(dLng/2));
-
-    c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
-    distance = (radius * c) / 1.60934;
-*/
-  currentStation = (new google.maps.LatLng(stations[i].lat, stations[i].lng));
-
-  var distance = new google.maps.geometry.spherical.computeDistanceBetween(yourLoc, stations[i]);
-console.log(distance)
     if (distance < closestStop.distance) {
       closestStop.distance = distance;
       closestStop.stop_id = stations[i].stop_id;
     }
   }
+}*/
 
-console.log(closestStop);
+
+
+
+//JSON Parsing for the stop information
+function fetchTrainInfo(stopInfo) {
+  var stopId = stopInfo.stop_id;
+
+  var request = new XMLHttpRequest();
+
+  request.open("GET", "https://chicken-of-the-sea.herokuapp.com/redline/schedule.json?stop_id=" + stopId, true);
+
+  request.onreadystatechange = function () {
+    if (request.readyState == 4 && request.status == 200) {
+      var allData = request.responseText;
+      var comingTrains = JSON.parse(allData);
+    }
+    else if (request.readyState == 4 && request.status != 200) {
+      alert("something went wrong")
+    }
+    else if (request.readyState == 3) {
+      alert("loading")
+    };
+  };
+
+  request.send();
+
+
+
+
 }
