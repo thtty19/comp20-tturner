@@ -33,15 +33,16 @@ var ashmontFullLine = redLineStops.slice(0, 17);
 var braintreeBranch = redLineStops.slice(17, 22);
 braintreeBranch.unshift(redLineStops[12]);
 
+//declaring and initializing the global variable of the user's position
+//it begins with latitudes and longitudes of NaN to prevent it from being used
+//before the user's geographic location is found
 var yourPos = {lat: NaN, lng: NaN};
 
 
 //Creating the display
 var map;
 function initMap () {
-  //Calling the function to find the nearest T station
-  //var location = findNearest(testCoords, redLineStops);
-
+  //
   if (navigator.geolocation){
     navigator.geolocation.getCurrentPosition(function(position) {
       var pos = {
@@ -53,13 +54,14 @@ function initMap () {
       map.panTo(yourPos);
 
       //finding the closest station
-      closestStop = findNearest(yourPos, redLineStops);
+      closestStop = findNearest(yourPos);
 
-      //making the info window, marker, and polyline
+
+      //making the info window, marker, and polyline for the user's location
       var personalWindow = new google.maps.InfoWindow({
         content: "<p>The nearest station to you is <strong>" + redLineStops[closestStop.ind].name
         + "</strong></p>"
-        + "<p> It is a " + closestStop.distance + " mile walk</p>"
+        + "<p> It is " + closestStop.distance + " miles away</p>"
       });
 
       var yourMark = new google.maps.Marker({
@@ -112,7 +114,7 @@ function initMap () {
   });
 
 
-//creating and placing the station markers on the map
+//creating the markers and info windows for all the stations
   var stationMarker = [];
   var stopId = [];
   for (i=0; i<redLineStops.length; i++) {
@@ -141,17 +143,9 @@ function initMap () {
   };
 }
 
-
-
-
-function toRadians(x) {
-  return x * Math.PI / 180;
-}
-
-
 //function to determine the closest station to you
 //requires two paramters, an object containing your latitude and longitute
-//and an aray of objects containing the stations' stop ids, lats, and longs
+//and a global array of objects containing the stations' stop ids, lats, and longs
 function findNearest(yourPos) {
   var distance;
   var closestStop = {ind: -1, distance: Infinity};
@@ -160,12 +154,15 @@ function findNearest(yourPos) {
     var pos = new google.maps.LatLng(yourPos);
 
     var distance = google.maps.geometry.spherical.computeDistanceBetween(pos, station);
+
+    //converting the distance from meters to miles
     distance = distance * 0.000621371;
 
     //Rounding to 2 decimal places
     distance = Math.round(distance * 100) / 100;
 
-
+    //saving the distance and index of the stop if it is closer than the stop
+    //that is currently saved in closestStop
     if (distance < closestStop.distance) {
       closestStop.distance = distance;
       closestStop.ind = i;
@@ -175,26 +172,31 @@ function findNearest(yourPos) {
   return closestStop;
 }
 
-
-function makeYourContent(stopName, distance) {
-
-}
-
-
-function makeWindowContent(direction, arrival_time, name) {
+//Function to produce the content for the info windows for the station markers
+//requires an array of strings containing the trains directions, an array with
+//the departure times for the trains, and an array with the name of the station
+function makeWindowContent(direction, departure_time, name) {
   var windowInfo = "<div id=info><h1>" + name + "</h1>"
-  + " <div class=direction>"
-  + "<p> Direction and time of the next 10 trains <p>";
+  + "<p> Direction and departure time of the next "
+  + direction.length + " trains <p>";
+
+  if (direction.length < 10) {
+    windowInfo += "<p>*There was not information for all 10 upcoming trains*<p>"
+    + "<p>*All available information is displayed*</p>";
+  }
+
   for (count = 0; count < direction.length; count++) {
-    windowInfo += "<p>" + direction[count] + "    " + arrival_time[count] + "</p>";
+    windowInfo += "<p>" + direction[count] + "    " + departure_time[count] + "</p>";
   };
   windowInfo += "</div></div>";
+
   return windowInfo;
 
 };
 
 
-//JSON Parsing for the stop information
+//Function for JSON Parsing the stop information
+//requires the stop id and the name of the station
 function fetchTrainInfo(stopId, stopName) {
   var request = new XMLHttpRequest();
 
@@ -202,14 +204,14 @@ function fetchTrainInfo(stopId, stopName) {
   //request.open("GET", "https://chicken-of-the-sea.herokuapp.com/redline/schedule.json?stop_id=" + stopId, false)
   request.open("GET", "https://api-v3.mbta.com/predictions?filter[route]=Red&filter[stop]=" + stopId + "&page[limit]=10&page[offset]=0&sort=departure_time&api_key=86e986351ed9401ba54ecce14c481d36", false);
 
-  request.onreadystatechange = function (trainInfo, direction, arrival_time) {
+  request.onreadystatechange = function (trainInfo, direction, departure_time) {
     if (request.readyState == 4 && request.status == 200) {
       var allData = request.responseText;
       var comingTrains = JSON.parse(allData);
       var direction = [""];
-      var arrival_date = [];
-      var arrival_time = [];
-      var trainInfo = comingTrains.data; //data[+0-to-9+].attributes.(arrival_time, departure_time, direction_id)
+      var departure_date = [];
+      var departure_time = [];
+      var trainInfo = comingTrains.data; //data[+0-to-9+].attributes.(departure_time, departure_time, direction_id)
       for (count = 0; count < trainInfo.length; count++) {
         if (comingTrains.data[count].attributes.direction_id == 1) {
             direction[count] = "<strong>North:</strong>";
@@ -217,15 +219,15 @@ function fetchTrainInfo(stopId, stopName) {
             direction[count] = "<strong>South:</strong>"
           };
 
-        if (comingTrains.data[count].attributes.arrival_time != null){
-          arrival_date[count] = comingTrains.data[count].attributes.arrival_time;
-          arrival_time[count] = arrival_date[count].slice(11,19);
+        if (comingTrains.data[count].attributes.departure_time != null){
+          departure_date[count] = comingTrains.data[count].attributes.departure_time;
+          departure_time[count] = departure_date[count].slice(11,19);
       } else {
-        arrival_time[count] = "This information is not currently available for this train";
+        departure_time[count] = "This information is not currently available for this train";
       }
 
     };
-      contentString = makeWindowContent(direction, arrival_time, stopName);
+      contentString = makeWindowContent(direction, departure_time, stopName);
     }
     else if (request.readyState == 4 && request.status != 200) {
       alert("something went wrong")
@@ -233,20 +235,6 @@ function fetchTrainInfo(stopId, stopName) {
     else if (request.readyState == 3) {
 
     }
-
-  /*  for (count = 0; count < trainInfo.length; count++) {
-      if (comingTrains.data[count].attributes.direction_id == 1) {
-        direction[count] = "North (to Alewife)";
-      } else {
-        direction[count] = "South (to Ashmont/Braintree)"
-      };
-
-      arrival_time[count] = comingTrains.data[count].attributes.arrival_time;
-    }*/
-
-
-     //makeWindowContent(direction, arrival_time);
-
   };
 
   request.send();
