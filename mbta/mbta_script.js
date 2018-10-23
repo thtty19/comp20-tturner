@@ -27,13 +27,6 @@ var redLineStops = [
   {name: "Braintree", stop_id: "place-brntn", lat: 42.2078543, lng: -71.0011385}
 ];
 
-var testCoords = {latitude: 42.3113, longitude: -71.05332}
-
-var testLine = [
-  {latitude: 42.3113, longitude: -71.05332},
-  {latitude: 42.39674, longitude: -71.121815}
-];
-
 //producing an array with stops from alewife to ashmont
 var ashmontFullLine = redLineStops.slice(0, 17);
 //producing an array with the JFK/UMass stops and the Braintree branch stops
@@ -57,21 +50,47 @@ function initMap () {
       };
       yourPos.lat = pos.lat;
       yourPos.lng = pos.lng;
+      map.panTo(yourPos);
+
+      //finding the closest station
+      closestStop = findNearest(yourPos, redLineStops);
+
+      //making the info window, marker, and polyline
+      var personalWindow = new google.maps.InfoWindow({
+        content: "<p>The nearest station to you is <strong>" + redLineStops[closestStop.ind].name
+        + "</strong></p>"
+        + "<p> It is a " + closestStop.distance + " mile walk</p>"
+      });
+
+      var yourMark = new google.maps.Marker({
+        position: yourPos,
+        draggable: false,
+        map: map
+      });
+
+      yourMark.addListener('click', function() {
+        personalWindow.open(map, this);
+      })
+
+      var yourLine = new google.maps.Polyline({
+        path: [yourPos, redLineStops[closestStop.ind]],
+        strokeColor: '#0000FF',
+        strokeOpactiy: 1.0,
+        strokeWidth: 3,
+        map: map
+      });
+
     });
+  } else {
+    alert("location services are not supported by your current browser, we are unable to find your location")
   };
 
-
-  //Calling the function to find the nearest T station
-  //var location = findNearest(yourPos, redLineStops);
 
   //making the map the background, initially centered at South Station
   map = new google.maps.Map(document.getElementById("map"), {
     center: redLineStops[9], //initially centered on south station
     zoom: 12
   });
-  /*if (yourPos.lat != NaN && yourPos.lng != NaN) {
-    map.setCenter(yourPos);
-  };*/
 
 
 //creating a polyline connecting the stops from alewife to ashmont
@@ -92,14 +111,6 @@ function initMap () {
     map: map,
   });
 
-  /*var personalLine = new google.maps.Polyline ({
-    path: testLine,
-    strokeColor: '#0000FF',
-    strokeOpactiy: 1.0,
-    strokeWidth: 3,
-    map:map,
-  })*/
-
 
 //creating and placing the station markers on the map
   var stationMarker = [];
@@ -113,10 +124,9 @@ function initMap () {
       },
       draggable: false,
       map: map
-    })
-
-    var infoWindow = new google.maps.InfoWindow({
     });
+
+    var infoWindow = new google.maps.InfoWindow();
 
     stopId[i] = redLineStops[i].stop_id
 
@@ -129,9 +139,9 @@ function initMap () {
       infoWindow.setContent(fetchTrainInfo(redLineStops[index].stop_id, redLineStops[index].name));
     });
   };
-
-
 }
+
+
 
 
 function toRadians(x) {
@@ -142,25 +152,33 @@ function toRadians(x) {
 //function to determine the closest station to you
 //requires two paramters, an object containing your latitude and longitute
 //and an aray of objects containing the stations' stop ids, lats, and longs
-function findNearest(yourLoc, stations) {
+function findNearest(yourPos) {
   var distance;
-  var closestStop = {stop_id: "", distance: Infinity};
-  var currentStation = new google.maps.LatLng(0, 0);
+  var closestStop = {ind: -1, distance: Infinity};
+  for (var i = 0; i < redLineStops.length; i++) {
+    var station = (new google.maps.LatLng(redLineStops[i].lat, redLineStops[i].lng));
+    var pos = new google.maps.LatLng(yourPos);
 
-  for (i = 0; i < stations.length; i++) {
+    var distance = google.maps.geometry.spherical.computeDistanceBetween(pos, station);
+    distance = distance * 0.000621371;
 
-    station = (new google.maps.LatLng(stations[i].lat, stations[i].lng));
+    //Rounding to 2 decimal places
+    distance = Math.round(distance * 100) / 100;
 
-    var distance = new google.maps.geometry.spherical.computeDistanceBetween(yourLoc, station);
 
     if (distance < closestStop.distance) {
       closestStop.distance = distance;
-      closestStop.stop_id = stations[i].stop_id;
+      closestStop.ind = i;
+
     }
   }
+  return closestStop;
 }
 
 
+function makeYourContent(stopName, distance) {
+
+}
 
 
 function makeWindowContent(direction, arrival_time, name) {
@@ -194,15 +212,19 @@ function fetchTrainInfo(stopId, stopName) {
       var trainInfo = comingTrains.data; //data[+0-to-9+].attributes.(arrival_time, departure_time, direction_id)
       for (count = 0; count < trainInfo.length; count++) {
         if (comingTrains.data[count].attributes.direction_id == 1) {
-          direction[count] = "North";
-        } else {
-          direction[count] = "South"
-        };
+            direction[count] = "<strong>North:</strong>";
+          } else {
+            direction[count] = "<strong>South:</strong>"
+          };
 
-        arrival_date[count] = comingTrains.data[count].attributes.arrival_time;
-        arrival_time[count] = arrival_date[count].slice(11,19);
+        if (comingTrains.data[count].attributes.arrival_time != null){
+          arrival_date[count] = comingTrains.data[count].attributes.arrival_time;
+          arrival_time[count] = arrival_date[count].slice(11,19);
+      } else {
+        arrival_time[count] = "This information is not currently available for this train";
       }
 
+    };
       contentString = makeWindowContent(direction, arrival_time, stopName);
     }
     else if (request.readyState == 4 && request.status != 200) {
