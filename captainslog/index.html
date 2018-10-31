@@ -8,7 +8,35 @@
     <link rel="stylesheet" href="style.css" />
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
     <script>
-        // Your work will be done here...
+    $(document).ready(function() {
+      var initial = '';
+
+      for (var j = 0; j<localStorage.length; j++) {
+        initial += "<p>" + localStorage.getItem(localStorage.key(localStorage.length - 1 - j)) + "</p>";
+      }
+      $("#log").html(initial);
+
+
+      $('#msg').keypress(function(e) {
+        var i = 0;;
+        if (e.which == 13) {
+          var textInput = document.getElementById('msg').value;
+          var dateFull = Date();
+          var ind = dateFull.indexOf(" (");
+          var date = dateFull.substr(0,ind - 9);
+          var capsLog = date + " - " + textInput;
+
+          localStorage[new Date().getTime()] = capsLog;
+
+          var output = '';
+          for (var j = 0; j<localStorage.length; j++) {
+            output += "<p>" + localStorage.getItem(localStorage.key(localStorage.length - 1 - j)) + "</p>";
+          }
+          $("#log").html(output);
+        }
+      })
+    })
+
     </script>
 </head>
 

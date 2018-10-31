@@ -1,0 +1,10 @@
+body {
+  background-image: url(oldPaper.jpg);
+  background-size: cover;
+  font-family: "Snell Roundhand";
+  font-size: 20px;
+  font-weight: bold;
+}
+body h1 {
+  text-decoration: underline;
+}
