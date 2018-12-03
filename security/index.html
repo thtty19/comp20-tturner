@@ -90,7 +90,13 @@
   <p>These photos show me inserting the javascript to the username prompt, and the
     ensuing pop-up window at the home page.
   </p>
-  <p>
+  <p>One way to help resolve this issue is to remove any special characters from
+    the user input. This involves replacing any of the special characters with
+    nothing. To do this, use the replace function in javascript. To remove any
+    greater than or less than operators, simply run:
+    username = username.replace(/[^\w\s]/gi, '') <br>
+    This will prevent users from inputing code as their username.
+
   </p>
   <h3>2) NoSQL Injection from scores.json</h3>
   <h3>3) NoSQL Injections from /submit</h3>
