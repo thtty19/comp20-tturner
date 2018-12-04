@@ -20,13 +20,9 @@ app.post('/submit', function(request, response) {
   var username = request.body.username;
   var score = request.body.score;
   var grid = request.body.grid;
-  //console.log(validator.isInt(score));
-  console.log(username);
-  console.log(score);
-  console.log(grid);
+
   if (username != undefined && score != undefined && grid != undefined && validator.isInt(score) && validator.isJSON(grid)) {
     score = parseInt(score);
-    console.log('worked');
     var toInsert = {
       "username":username,
       "score":score,
@@ -41,20 +37,17 @@ app.post('/submit', function(request, response) {
               response.send(allScores);
             }
             else {
-              console.log("3");
               response.send('{"error":"Whoops, something is wrong with the database connection"}');
             }
           });
         }
         else {
-          console.log("2");
           response.send('{"error":"Whoops, something is wrong with the database connection"}');
         }
       });
     });
   }
   else {
-    console.log("1");
     response.send('{"error":"Whoops, something is wrong with your data!"}');
   }
 });

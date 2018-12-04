@@ -38,8 +38,9 @@
     method was tested, demonstrating the vulnerability of the database to malicious
     requests. The third place I wanted to try was the submit page. Inherently, this
     page requires some type of submission, and using the right framework, can be
-    exploited with NoSQL injections as well. Looking over the code, the submission
-    was required to be in the x-www-form-urlencoded format. Using Postman again,
+    exploited with Cross Origin Resource Sharing as well. Looking over the code,
+    the submission was required to be in the x-www-form-urlencoded format, but
+    cross origin resource sharing protection had been turned off. Using Postman again,
     I was succesfully able to inject data into the database. Through this method,
     I was even able to perform XSS, adding a user input pop-up window to the application
     upon loading.
@@ -59,8 +60,8 @@
     a "true" statement, such as "username[$ne]="a"" will pull up all the information
     for every username that is not "a". This provides hackers with access to all
     the data in the database, and can potentially expose sensitive information
-    that could be stored on the database. The third issue uncovered is another
-    NoSQL injection, this time from the /submit section of the app. Here, the game
+    that could be stored on the database. The third issue uncovered was a cross origin
+    resource sharing vulnerability on the /submit page. Here, the game
     sends the required data to the database for storage. A third party
     could penetrate this system using simple computre science tools to input falsified
     data. The fourth issue is somewhat wrapped in with the third issue. From this
@@ -94,11 +95,12 @@
   <p>One way to help resolve this issue is to remove any special characters from
     the user input. This involves replacing any of the special characters with
     nothing. To do this, use the replace function in javascript. To remove any
-    greater than or less than operators, simply run:<br>
+    special characters, simply run:<br>
     username = username.replace(/[^\w\s]/gi, '') <br>
     This will prevent users from inputing code as their username. Thus eliminating
     the threat of XSS from the username input section.
   </p>
+
   <h3>2) NoSQL Injection from scores.json</h3>
   <p>This issue arises in the /scores.json section of the application. There, a
     user can input "usernam[$ne]=''" into the URL query to gain access to the
@@ -118,12 +120,95 @@
     "/scores.json?username[$ne]=" <br>
     they will be able to see all of the data that is stored in the database.
     This issue was found by looking for user inputs in the application and then
-    reading the code to check to security features. When none were found, a test
-    was run, producing the following response.
+    reading the code to check to security features. When none were found, tests
+    were run on the webpage itself and on Postman.
   </p>
-  <img src="NoSQL_db_access.png" alt="database security vulnerability demo"/>
-  <p>
-  <h3>3) NoSQL Injections from /submit</h3>
+  <img src="photos/NoSQL_db_access.png" alt="database security vulnerability demo"/>
+  <img src="photos/NoSQL_access_postman.png" alt="database security vulnerability demo"/>
+  <p>One way to fix this would be to add a component to the /scores.json page
+    with a dropdown that contains every username in the databse. Letting the user
+    select from a pre-set list of inputs will prevent the user from being able to
+    insert commands to be able to access all of the data in the databse.
+  </p>
+
+  <h3>3) Cross Origin Resource Sharing on /submit</h3>
+  <p>This vulnerability lies in the /submit posting section of the app. A user can
+    input data into the database from locations outside of the 2048 game app.
+  </p>
+  <p>On it's own, this is a moderate security threat, because users can input
+    falsified data and overload the database. Using scripting, hackers could potentially
+    overload the system, increasing server demands and slowing service to all
+    users. But, when coupled with the fourth issue (stated below), this vlunerability
+    becomes more severe. I will talk about that in the next section though.
+  </p>
+  <p>This issue can occur if users employ a third party data submitting application,
+    such as curl or Postman. From here, users can send any submission they want
+    to the database, as long as the submission is in the correct format, in this
+    case, that would be the x-www-form-urlencoded format. The vulnerability is
+    visible here:
+  </p>
+  <img src="photos/CORS_injection_submit.png" alt="proof of cross origin resource sharing"/>
+  <p>To fix this issue, the code should be changed to only allow cross origin
+    resource sharing from one location. Currently, the code allows CORS from any
+    location, as denoted by the '*' in the code below. Changing this to the url
+    where the game is run will prevent data submissions from any other locations,
+    thus patching the vulnerability.
+  </p>
+  <img src="photos/CORS_code.png" alt="image of the CORS code in the app"/>
+
   <h3>4) Cross Site Scripting from /Submit</h3>
+  <p>This vulnerability occurs in the /submit section of the application. It is
+    piggybacked off of the CORS vulnerability discussed above. This is another
+    location where a user could inject malicious javascript code into the database.
+  </p>
+  <p>This is a severe security vulnerability, as discussed before in the section
+    on XSS from the username input window. If not dealt with, a hacker could inject
+    code that affects every user of the application.
+  </p>
+  <p>This vulnerability can be exploited when a user submits data from a third
+    party source, as is currently possible due to the unrestricted cross origin
+    resource sharing that is currently permitted in the application. Using the
+    third party applications such as curl or Postman, a hacker can inject whatever
+    data they want into the database. This can even include long javascript code
+    that can affect all the users of the application. The issue was found by
+    reading through the /submit section of the code and determining that there was
+    no filter on the data that could be submitted to the database. This can be
+    seen in the code snippet shown below.
+  </p>
+    <img src="photos/CORS_XSS_code.png" alt="image of the code at fault"/>
+  <p>
+    A test was run,
+    and the results are visible below. (Yes, "deserves" is spelled wrong. As any
+    good scammer knows, typos are a good way to weed out attentive users, thus
+    only more gullible users end up responding to the scams, increasing efficiancy
+    of the scams.)
+  </p>
+  <img src="photos/CORS_injection_submit_proof.png" alt="proof of CORS XSS submission"/>
+  <p>To fix this issue, adding a special character removal before the submissions
+    are entered into the database will prevent hackers from being able to submit
+    javascript code to the database. This is shown below:
+  </p>
+  <img src="photos/CORS_XSS_fix.png" alt="a solution to the vulnerability"/>
+
+  <h1>Conclusion</h1>
+  <p>In conclusion, the penetration testing has found a number of vulnerabilities
+    in the current iteration of your application. The four documented in this
+    report were: two instances of Cross Site Scripting vulnerabilities, in the 2048
+    game and in the /submit section of the code; one instance of NoSQL injection,
+    in the /scores.json section of the code, and one instance of Cross Origin
+    Resource Sharing vulnerability in the /submit section of the code. These vulnerabilities,
+    when compounded, present a severe threat the the safety of the applications
+    database and to the users of the application. These fixes are recommended
+    immediately, since the application is already up and running.
+  </p>
+  <h1>References</h1>
+  <p>For this report, I used the following sites to aid in the penetration testing:
+  </p>
+  <ul>
+    <li>https://www.veracode.com/security/xss</li>
+    <li>http://www.youtube.com/watch?v=lcO1BTNh8r8</li>
+    <li>http://blog.websecurify.com/2014/08/hacking-nodejs-and-mongodb.html</li>
+  </ul>
+
 </body>
 </html>
