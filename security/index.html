@@ -3,6 +3,7 @@
 
 <head>
   <meta charset='utf-8'/>
+  <link rel="stylesheet" href="style.css" type="text/css"/>
   <title>Penetration Testing Report</title>
 </head>
 
@@ -93,12 +94,35 @@
   <p>One way to help resolve this issue is to remove any special characters from
     the user input. This involves replacing any of the special characters with
     nothing. To do this, use the replace function in javascript. To remove any
-    greater than or less than operators, simply run:
+    greater than or less than operators, simply run:<br>
     username = username.replace(/[^\w\s]/gi, '') <br>
-    This will prevent users from inputing code as their username.
-
+    This will prevent users from inputing code as their username. Thus eliminating
+    the threat of XSS from the username input section.
   </p>
   <h3>2) NoSQL Injection from scores.json</h3>
+  <p>This issue arises in the /scores.json section of the application. There, a
+    user can input "usernam[$ne]=''" into the URL query to gain access to the
+    data in the database.
+  </p>
+  <p>This is a low security threat at the moment for your app. Although it is
+    not safe to have users able to access all of the data in the database, currently
+    the only information stored is non-private data. This means that accessing the
+    data will not reap any sensitive information. If you plan on scaling your application
+    to allow users to input passwords, save credit cards, or store other forms
+    of sensitive information, then this security issue would become a more major
+    security threat.
+  </p>
+  <p>This issue occurs when user's navigate to the /scores.json page of the application
+    and enter the username they are looking for as a query. If the user enters
+    the command <br>
+    "/scores.json?username[$ne]=" <br>
+    they will be able to see all of the data that is stored in the database.
+    This issue was found by looking for user inputs in the application and then
+    reading the code to check to security features. When none were found, a test
+    was run, producing the following response.
+  </p>
+  <img src="NoSQL_db_access.png" alt="database security vulnerability demo"/>
+  <p>
   <h3>3) NoSQL Injections from /submit</h3>
   <h3>4) Cross Site Scripting from /Submit</h3>
 </body>
